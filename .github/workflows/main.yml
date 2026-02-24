@@ -23,17 +23,22 @@ jobs:
         MOODLE_PASSWORD: ${{ secrets.MOODLE_PASSWORD }}
         MOODLE_URL: "https://e.cw.sharif.edu"
       run: |
-        # Build the image
+        # Build the image from Code directory
+        cd Code
         docker build -t moodle-downloader .
         
-        # Run the container with volume mount to persist files
-        # We mount $(pwd) to /app so the script writes to the runner's workspace
+        # Run the container with volume mount relative to runner workspace
+        # $(pwd) is now Code/, so we point volume to ../Courses
+        mkdir -p ../Courses
         docker run --rm \
-          -v $(pwd):/app \
+          -v $(readlink -f ../Courses):/app/Courses \
           -e MOODLE_USERNAME="$MOODLE_USERNAME" \
           -e MOODLE_PASSWORD="$MOODLE_PASSWORD" \
           -e MOODLE_URL="$MOODLE_URL" \
           moodle-downloader
+        
+        # Return to root for git operations
+        cd ..
 
     - name: Commit and Push changes
       run: |

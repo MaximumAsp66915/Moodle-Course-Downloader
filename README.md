@@ -12,11 +12,21 @@ This python script automatically fetches course materials from your university's
             -   `Slides/`
             -   `Homework/`
             -   `Resources/`
--   **GitHub Integration**: Can be run locally or via GitHub Actions (experimental due to firewalls).
+
+## Project Structure
+
+```
+├── Code/           <-- Scripts and Configuration
+│   ├── moodle_downloader.py
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── run_and_push.ps1
+├── Courses/        <-- Downloaded Content
+├── README.md
+└── LICENSE
+```
 
 ## Local Setup (Docker)
-
-This is the recommended way to run the script locally.
 
 1.  **Clone the repository**:
     ```bash
@@ -25,14 +35,17 @@ This is the recommended way to run the script locally.
     ```
 
 2.  **Configure Credentials**:
+    -   Go into the `Code/` folder.
     -   Copy `.env.example` to `.env`.
     -   Fill in your Moodle username and password.
 
-3.  **Run with Docker Compose**:
-    ```bash
-    docker-compose up --build
+3.  **Run with PowerShell**:
+    Open PowerShell inside the `Code` folder and run:
+    ```powershell
+    cd Code
+    .\run_and_push.ps1
     ```
-    This will build the image and run the script. Files will be downloaded to the `Courses/` directory on your host machine.
+    This automatically builds the downloader, runs it (saving files to `../Courses`), and pushes new content to GitHub.
 
 ## GitHub Actions Usage & Frequency
 

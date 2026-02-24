@@ -4,7 +4,7 @@ services:
   moodle-downloader:
     build: .
     volumes:
-      - .:/app
+      - ../Courses:/app/Courses
     environment:
       - MOODLE_USERNAME=${MOODLE_USERNAME}
       - MOODLE_PASSWORD=${MOODLE_PASSWORD}

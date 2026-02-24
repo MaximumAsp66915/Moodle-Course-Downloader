@@ -106,11 +106,13 @@ def login():
 def get_enrolled_courses():
     """Fetches list of enrolled courses."""
     logger.info("Fetching enrolled courses...")
-    courses = []
     
     # Try different URLs
     urls_to_check = ["/my/courses.php", "/my/", "/user/profile.php"]
     
+    seen_ids = set()
+    unique_courses = []
+
     for relative_url in urls_to_check:
         dashboard_url = urljoin(MOODLE_URL, relative_url)
         logger.info(f"Checking for courses at: {dashboard_url}")
@@ -119,45 +121,60 @@ def get_enrolled_courses():
             response = cl.get(dashboard_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            headers = soup.find_all(['h3', 'h4', 'h5', 'a'])
+            headers = soup.find_all(['h3', 'h4', 'h5', 'a', 'span', 'div'])
             for h in headers:
-                # Check if it has a link to course/view.php
+                # Find the link tag
                 a_tag = h if h.name == 'a' else h.find('a')
-                if a_tag and a_tag.get('href') and '/course/view.php?id=' in a_tag['href']:
+                if not a_tag or not a_tag.get('href'):
+                    continue
+                    
+                href = a_tag.get('href', '')
+                if '/course/view.php?id=' in href:
+                    # Extract Course ID
+                    cid_match = re.search(r'[?&]id=(\d+)', href)
+                    if not cid_match:
+                        continue
+                    
+                    cid = cid_match.group(1)
+                    if cid in seen_ids:
+                        continue
+                    
                     name = a_tag.get_text(strip=True)
-                    url = a_tag['href']
-                    # Filter out garbage links or course categories
+                    # Often the name is inside a span or hidden
+                    if not name:
+                         # try looking for 'span' inside
+                         span = a_tag.find('span', class_='multiline')
+                         if span:
+                             name = span.get_text(strip=True)
+
                     if name and len(name) > 2:
-                        courses.append({'name': name, 'url': url})
+                        seen_ids.add(cid)
+                        # Clean link to be standard
+                        clean_url = urljoin(MOODLE_URL, f"/course/view.php?id={cid}")
+                        unique_courses.append({'name': name, 'url': clean_url, 'id': cid})
+                        logger.info(f"Found Course: {name} (ID: {cid})")
         
         except Exception as e:
             logger.warning(f"Failed to check {dashboard_url}: {e}")
             
-    # Deduplicate
-    unique_courses = {}
-    for c in courses:
-        # Use course ID as unique key if possible
-        cid_match = re.search(r'id=(\d+)', c['url'])
-        cid = cid_match.group(1) if cid_match else c['url']
-        if cid not in unique_courses:
-             unique_courses[cid] = c
-             
-    result = list(unique_courses.values())
-    
     # Sort them by name to be consistent across runs
-    result.sort(key=lambda x: x['name'])
+    unique_courses.sort(key=lambda x: x['name'])
     
-    if not result:
+    if not unique_courses:
         logger.warning("No courses found. Check login or dashboard structure.")
         
-    return result
+    return unique_courses
 
 def sanitize_filename(name):
     """Sanitizes strings to be safe for filenames."""
-    # Replace invalid characters
+    # Replace invalid characters and extensive whitespace
     name = re.sub(r'[<>:"/\\|?*]', '_', name)
-    # Strip leading/trailing whitespace AND dots (Windows issue)
-    return name.strip().strip('.')
+    name = re.sub(r'\s+', ' ', name) # Collapse multiple spaces
+    name = name.strip().strip('.')
+    # Ensure filename is not empty
+    if not name:
+        name = "unnamed_item"
+    return name
 
 def download_file(url, folder, filename=None):
     """Downloads a file to the specified folder if it doesn't already exist."""
