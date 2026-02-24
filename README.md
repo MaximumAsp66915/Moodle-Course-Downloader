@@ -41,6 +41,12 @@ This workflow is configured to run **once a day** at 12:00 UTC.
 -   **Zero Idle Usage**: When the script is not running, it uses **0% CPU** and **0 minutes** of your GitHub Actions quota. GitHub completely shuts down the environment after the job finishes.
 -   **Efficiency**: The script checks if files already exist before downloading them. Subsequent runs will be very fast (detecting existing files) and will only download new content.
 -   **Quota**: A typical run takes 1-3 minutes. With GitHub Pro/Education (3000 minutes/month), this will use less than 5% of your monthly allowance.
+-   **Cost Calculation**: Running 5 minutes/day * 30 days = 150 minutes/month. This is extremely low compared to the 3,000 free minutes you get with GitHub Pro/Education.
+
+## Manual Usage
+-   **Adding Files**: You can manually add your own files (notes, extra PDFs) to the `Courses/` folders. The script **will not** delete or overwrite them (unless a file with the exact same name appears on Moodle).
+-   **Git Ignore**: The `Courses/` folder is NOT ignored by git, so your downloaded files will be backed up to the repository.
+
 
 
 ## Credits & License

@@ -154,7 +154,10 @@ def get_enrolled_courses():
 
 def sanitize_filename(name):
     """Sanitizes strings to be safe for filenames."""
-    return re.sub(r'[<>:"/\\|?*]', '_', name).strip()
+    # Replace invalid characters
+    name = re.sub(r'[<>:"/\\|?*]', '_', name)
+    # Strip leading/trailing whitespace AND dots (Windows issue)
+    return name.strip().strip('.')
 
 def download_file(url, folder, filename=None):
     """Downloads a file to the specified folder if it doesn't already exist."""
