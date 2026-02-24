@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  moodle-downloader:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - MOODLE_USERNAME=${MOODLE_USERNAME}
+      - MOODLE_PASSWORD=${MOODLE_PASSWORD}
+      - MOODLE_URL=${MOODLE_URL}

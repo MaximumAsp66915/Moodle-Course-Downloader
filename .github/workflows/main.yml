@@ -1,0 +1,49 @@
+name: Moodle Downloader
+
+on:
+  schedule:
+    # Run daily at 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  download-and-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Build and Run Docker Container
+      env:
+        MOODLE_USERNAME: ${{ secrets.MOODLE_USERNAME }}
+        MOODLE_PASSWORD: ${{ secrets.MOODLE_PASSWORD }}
+        MOODLE_URL: "https://e.cw.sharif.edu"
+      run: |
+        # Build the image
+        docker build -t moodle-downloader .
+        
+        # Run the container with volume mount to persist files
+        # We mount $(pwd) to /app so the script writes to the runner's workspace
+        docker run --rm \
+          -v $(pwd):/app \
+          -e MOODLE_USERNAME="$MOODLE_USERNAME" \
+          -e MOODLE_PASSWORD="$MOODLE_PASSWORD" \
+          -e MOODLE_URL="$MOODLE_URL" \
+          moodle-downloader
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add Courses/
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Auto-update course materials [skip ci]"
+          git push
+        fi
