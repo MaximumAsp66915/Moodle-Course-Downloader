@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  moodle-downloader:
+    build: .
+    volumes:
+      - ../Courses:/app/Courses
+      - ../Past-Courses:/app/Past-Courses
+    environment:
+      - MOODLE_USERNAME=${MOODLE_USERNAME}
+      - MOODLE_PASSWORD=${MOODLE_PASSWORD}
+      - MOODLE_URL=${MOODLE_URL}

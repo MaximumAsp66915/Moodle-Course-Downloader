@@ -1,0 +1,77 @@
+name: Moodle Downloader
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'Courses/**'
+      - 'Past-Courses/**'
+      - '**.md'
+  schedule:
+    # Run daily at 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  download-and-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Check that username and password are saved
+      id: check
+      env:
+        MOODLE_USERNAME: ${{ secrets.MOODLE_USERNAME }}
+        MOODLE_PASSWORD: ${{ secrets.MOODLE_PASSWORD }}
+      run: |
+        if [ -z "$MOODLE_USERNAME" ] || [ -z "$MOODLE_PASSWORD" ]; then
+          echo "MOODLE_USERNAME and/or MOODLE_PASSWORD secret is missing. Nothing to do (see README)."
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Checkout repository
+      if: steps.check.outputs.ready == 'true'
+      uses: actions/checkout@v4
+
+    - name: Build and Run Docker Container
+      if: steps.check.outputs.ready == 'true'
+      env:
+        MOODLE_USERNAME: ${{ secrets.MOODLE_USERNAME }}
+        MOODLE_PASSWORD: ${{ secrets.MOODLE_PASSWORD }}
+        MOODLE_URL: "https://cw.sharif.ir"
+      run: |
+        # Build the image from Code directory
+        cd Code
+        docker build -t moodle-downloader .
+        
+        # Run the container with volume mount relative to runner workspace
+        # $(pwd) is now Code/, so we point volume to ../Courses
+        mkdir -p ../Courses ../Past-Courses
+        docker run --rm \
+          -v $(readlink -f ../Courses):/app/Courses \
+          -v $(readlink -f ../Past-Courses):/app/Past-Courses \
+          -e MOODLE_USERNAME="$MOODLE_USERNAME" \
+          -e MOODLE_PASSWORD="$MOODLE_PASSWORD" \
+          -e MOODLE_URL="$MOODLE_URL" \
+          moodle-downloader
+        
+        # Return to root for git operations
+        cd ..
+
+    - name: Commit and Push changes
+      if: steps.check.outputs.ready == 'true'
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add -A Courses/ Past-Courses/
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Auto-update course materials [skip ci]"
+          git push
+        fi

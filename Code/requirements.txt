@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+python-dotenv
+tqdm
+numpy
+pillow
+opencv-python-headless
+torch
+torchvision

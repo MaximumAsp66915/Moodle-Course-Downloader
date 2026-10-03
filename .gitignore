@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Project notes for Claude Code (not part of the project)
+CLAUDE.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Stray output when running from inside Code/
+Code/Courses/
+Code/Past-Courses/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
