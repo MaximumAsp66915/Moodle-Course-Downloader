@@ -112,6 +112,10 @@ Use this only if you prefer not to use GitHub Actions.
 
 ---
 
+## 👥 Credentials
+
+The Captcha solver was initially designed by Hossein Dadashzadeh.
+
 ## 🔐 Privacy
 
 Your username and password are only used to log in to CourseWare. They stay in your own GitHub *Secrets* (or in your own `.env` file) and are never sent anywhere else.
